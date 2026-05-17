@@ -1,0 +1,132 @@
+{
+  "name": "warehouseIQ — 01 Inventory List",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "inventory/list",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh-inv-list-001",
+      "name": "Webhook (POST /inventory/list)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "inventory-list"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "secret-check",
+              "leftValue": "={{ $json.headers['x-webhook-secret'] }}",
+              "rightValue": "={{ $env.WEBHOOK_SECRET }}",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-secret-001",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select id, item_name, category, stock_level, reorder_point, price, supplier_email,\n       (stock_level < reorder_point) as below_reorder\nfrom public.inventory\norder by id;",
+        "options": {}
+      },
+      "id": "pg-select-001",
+      "name": "Postgres — select inventory",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [680, 220],
+      "credentials": {
+        "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "items",
+        "options": {}
+      },
+      "id": "agg-001",
+      "name": "Aggregate to items[]",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "ok", "value": true, "type": "boolean" },
+            { "id": "a2", "name": "items", "value": "={{ $json.items }}", "type": "array" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-001",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, items: $json.items } }}",
+        "options": {}
+      },
+      "id": "resp-200-001",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 401,
+        "responseBody": "={{ { ok: false, status: 'unauthorized', message: 'Invalid webhook secret' } }}",
+        "options": {}
+      },
+      "id": "resp-401-001",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 420]
+    }
+  ],
+  "connections": {
+    "Webhook (POST /inventory/list)": {
+      "main": [[{ "node": "Verify Secret", "type": "main", "index": 0 }]]
+    },
+    "Verify Secret": {
+      "main": [
+        [{ "node": "Postgres — select inventory", "type": "main", "index": 0 }],
+        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+      ]
+    },
+    "Postgres — select inventory": {
+      "main": [[{ "node": "Aggregate to items[]", "type": "main", "index": 0 }]]
+    },
+    "Aggregate to items[]": {
+      "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]]
+    },
+    "Build Response": {
+      "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "warehouseIQ" }]
+}

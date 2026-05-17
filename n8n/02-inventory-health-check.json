@@ -1,0 +1,113 @@
+{
+  "name": "warehouseIQ — 02 Inventory Health Check",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "inventory/health-check",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wh-health-001",
+      "name": "Webhook (POST /inventory/health-check)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "inventory-health-check"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "secret-check",
+              "leftValue": "={{ $json.headers['x-webhook-secret'] }}",
+              "rightValue": "={{ $env.WEBHOOK_SECRET }}",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-secret-002",
+      "name": "Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select id, item_name, category, stock_level, reorder_point,\n       (reorder_point - stock_level) as shortage,\n       price, supplier_email\nfrom public.inventory\nwhere stock_level < reorder_point\norder by shortage desc;",
+        "options": {}
+      },
+      "id": "pg-health-001",
+      "name": "Postgres — low-stock items",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [680, 220],
+      "credentials": {
+        "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "items",
+        "options": {}
+      },
+      "id": "agg-health-001",
+      "name": "Aggregate to items[]",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, low_stock_count: ($json.items || []).length, items: ($json.items || []) } }}",
+        "options": {}
+      },
+      "id": "resp-200-002",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 401,
+        "responseBody": "={{ { ok: false, status: 'unauthorized', message: 'Invalid webhook secret' } }}",
+        "options": {}
+      },
+      "id": "resp-401-002",
+      "name": "Respond 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 420]
+    }
+  ],
+  "connections": {
+    "Webhook (POST /inventory/health-check)": {
+      "main": [[{ "node": "Verify Secret", "type": "main", "index": 0 }]]
+    },
+    "Verify Secret": {
+      "main": [
+        [{ "node": "Postgres — low-stock items", "type": "main", "index": 0 }],
+        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+      ]
+    },
+    "Postgres — low-stock items": {
+      "main": [[{ "node": "Aggregate to items[]", "type": "main", "index": 0 }]]
+    },
+    "Aggregate to items[]": {
+      "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "warehouseIQ" }]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "warehouseIQ — 06 Error Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "err-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $input.first().json;\nreturn [{\n  json: {\n    workflow_name: e.workflow?.name ?? 'unknown',\n    node_name:     e.execution?.lastNodeExecuted ?? 'unknown',\n    error_message: e.execution?.error?.message ?? 'unknown error',\n    payload:       e\n  }\n}];"
+      },
+      "id": "code-format-err",
+      "name": "Format error payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 320]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "insert into public.error_logs (workflow_name, node_name, error_message, payload) values ($1, $2, $3, $4::jsonb) returning id;",
+        "options": {
+          "queryReplacement": "={{ $json.workflow_name }},{{ $json.node_name }},{{ $json.error_message }},{{ JSON.stringify($json.payload) }}"
+        }
+      },
+      "id": "pg-err-insert",
+      "name": "Postgres — Insert error_logs",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [680, 320],
+      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [[{ "node": "Format error payload", "type": "main", "index": 0 }]]
+    },
+    "Format error payload": {
+      "main": [[{ "node": "Postgres — Insert error_logs", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "warehouseIQ" }]
+}

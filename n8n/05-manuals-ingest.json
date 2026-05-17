@@ -1,0 +1,103 @@
+{
+  "name": "warehouseIQ — 05 Manuals Ingest (one-shot)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Run once (Manual Trigger)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 400]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select id, product_name, category, content, version, to_char(last_updated,'YYYY-MM-DD') as last_updated from public.manuals_raw order by id;",
+        "options": {}
+      },
+      "id": "pg-manuals-raw",
+      "name": "Postgres — read manuals_raw",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 400],
+      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+    },
+    {
+      "parameters": {
+        "dataType": "text",
+        "text": "={{ $json.content }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              { "name": "product_name", "value": "={{ $json.product_name }}" },
+              { "name": "category",     "value": "={{ $json.category }}" },
+              { "name": "version",      "value": "={{ $json.version }}" },
+              { "name": "last_updated", "value": "={{ $json.last_updated }}" },
+              { "name": "source",       "value": "manuals_raw" }
+            ]
+          }
+        }
+      },
+      "id": "loader-001",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [680, 540]
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100
+      },
+      "id": "splitter-001",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [680, 700]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "product_manuals",
+        "options": {}
+      },
+      "id": "vstore-insert",
+      "name": "Supabase Vector Store (Insert)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [900, 400],
+      "credentials": { "supabaseApi": { "id": "REPLACE_ME", "name": "Supabase" } }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small"
+      },
+      "id": "emb-002",
+      "name": "OpenAI Embeddings (text-embedding-3-small)",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [900, 580],
+      "credentials": { "openAiApi": { "id": "REPLACE_ME", "name": "OpenAI" } }
+    }
+  ],
+  "connections": {
+    "Run once (Manual Trigger)": {
+      "main": [[{ "node": "Postgres — read manuals_raw", "type": "main", "index": 0 }]]
+    },
+    "Postgres — read manuals_raw": {
+      "main": [[{ "node": "Supabase Vector Store (Insert)", "type": "main", "index": 0 }]]
+    },
+    "Default Data Loader": {
+      "ai_document": [[{ "node": "Supabase Vector Store (Insert)", "type": "ai_document", "index": 0 }]]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [[{ "node": "Default Data Loader", "type": "ai_textSplitter", "index": 0 }]]
+    },
+    "OpenAI Embeddings (text-embedding-3-small)": {
+      "ai_embedding": [[{ "node": "Supabase Vector Store (Insert)", "type": "ai_embedding", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "warehouseIQ" }]
+}
