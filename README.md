@@ -75,13 +75,22 @@ The browser **never** talks to n8n or Supabase directly. All traffic is proxied 
 ### 3. Frontend (Next.js)
 
 ```powershell
-cp .env.example .env.local
-# Fill in N8N_BASE_URL and N8N_WEBHOOK_SECRET
+Copy-Item .env.example .env.local
+# Fill in N8N_BASE_URL and N8N_WEBHOOK_SECRET, or leave them empty to run in
+# **mock mode** — the UI is fully usable offline with seed data baked in.
 npm install
 npm run dev
 ```
 
 Open http://localhost:3000.
+
+### Mock mode
+
+If `N8N_BASE_URL` is not set, every API route falls back to `lib/mock.ts`, which
+ships the same seed data as `db/seed_inventory.sql` and reproduces every
+business outcome (`success`, `below_reorder`, `insufficient`, validation
+errors, agent jailbreak refusal). This lets you demo the UI without n8n running.
+The status pill in the top-right reads **mock mode** when the fallback is active.
 
 ---
 
