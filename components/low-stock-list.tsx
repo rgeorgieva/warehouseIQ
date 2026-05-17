@@ -58,7 +58,7 @@ export function LowStockList({ limit }: { limit?: number }) {
         </div>
       )}
       {display === null ? (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className={limit ? "grid gap-3 grid-cols-1" : "grid gap-3 md:grid-cols-2 lg:grid-cols-3"}>
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-24" />
           ))}
@@ -72,7 +72,7 @@ export function LowStockList({ limit }: { limit?: number }) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className={limit ? "grid gap-3 grid-cols-1" : "grid gap-3 md:grid-cols-2 lg:grid-cols-3"}>
           {display.map((i, idx) => (
             <motion.div
               key={i.id}
