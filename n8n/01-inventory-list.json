@@ -8,34 +8,48 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "wh-inv-list-001",
+      "id": "40444445-10b6-4816-8824-5b3df5da0217",
       "name": "Webhook (POST /inventory/list)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300],
+      "position": [
+        -448,
+        80
+      ],
       "webhookId": "inventory-list"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "conditions": [
             {
               "id": "secret-check",
               "leftValue": "={{ $json.headers['x-webhook-secret'] }}",
               "rightValue": "={{ $env.WEBHOOK_SECRET }}",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
         },
         "options": {}
       },
-      "id": "if-secret-001",
+      "id": "aa95243f-d2aa-491d-9069-7384ff085c7e",
       "name": "Verify Secret",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        -224,
+        80
+      ]
     },
     {
       "parameters": {
@@ -43,13 +57,19 @@
         "query": "select id, item_name, category, stock_level, reorder_point, price, supplier_email,\n       (stock_level < reorder_point) as below_reorder\nfrom public.inventory\norder by id;",
         "options": {}
       },
-      "id": "pg-select-001",
+      "id": "2de1bf07-4963-4527-a268-82a66f5f69db",
       "name": "Postgres — select inventory",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [680, 220],
+      "position": [
+        0,
+        0
+      ],
       "credentials": {
-        "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" }
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
       }
     },
     {
@@ -58,27 +78,43 @@
         "destinationFieldName": "items",
         "options": {}
       },
-      "id": "agg-001",
+      "id": "f8488d31-0859-4e23-92f4-fd1e8e7b0639",
       "name": "Aggregate to items[]",
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
-      "position": [900, 220]
+      "position": [
+        224,
+        0
+      ]
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
-            { "id": "a1", "name": "ok", "value": true, "type": "boolean" },
-            { "id": "a2", "name": "items", "value": "={{ $json.items }}", "type": "array" }
+            {
+              "id": "a1",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "a2",
+              "name": "items",
+              "value": "={{ $json.items }}",
+              "type": "array"
+            }
           ]
         },
         "options": {}
       },
-      "id": "set-001",
+      "id": "fce73f8c-cd79-4532-beb5-cbee9cce5820",
       "name": "Build Response",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1120, 220]
+      "position": [
+        448,
+        0
+      ]
     },
     {
       "parameters": {
@@ -86,47 +122,118 @@
         "responseBody": "={{ { ok: true, items: $json.items } }}",
         "options": {}
       },
-      "id": "resp-200-001",
+      "id": "d79c357d-22fc-4c71-aad6-4ed60a912192",
       "name": "Respond 200",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1340, 220]
+      "position": [
+        672,
+        0
+      ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseCode": 401,
         "responseBody": "={{ { ok: false, status: 'unauthorized', message: 'Invalid webhook secret' } }}",
         "options": {}
       },
-      "id": "resp-401-001",
+      "id": "23bfad1a-b276-43c1-b7d2-faba6f69b826",
       "name": "Respond 401",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [680, 420]
+      "position": [
+        0,
+        208
+      ]
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook (POST /inventory/list)": {
-      "main": [[{ "node": "Verify Secret", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Verify Secret": {
       "main": [
-        [{ "node": "Postgres — select inventory", "type": "main", "index": 0 }],
-        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Postgres — select inventory",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Postgres — select inventory": {
-      "main": [[{ "node": "Aggregate to items[]", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Aggregate to items[]",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Aggregate to items[]": {
-      "main": [[{ "node": "Build Response", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Build Response": {
-      "main": [[{ "node": "Respond 200", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "warehouseIQ" }]
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "LgS2GUoY7AXMXt2T",
+    "timezone": "Europe/Sofia",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "748cf1cf-b634-462f-af6b-49c355c94eaa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "37ba655aaf31738b8f5d06390490a0f4d491cf9acdb5c3dd7fb44113ebb1c85a"
+  },
+  "id": "WTGQFTzqlDTwJvL2",
+  "tags": [
+    {
+      "updatedAt": "2026-05-17T09:30:39.768Z",
+      "createdAt": "2026-05-17T09:30:39.768Z",
+      "id": "XdVvwQrY3LhS9NIP",
+      "name": "warehouseIQ"
+    }
+  ]
 }

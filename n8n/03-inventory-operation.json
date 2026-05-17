@@ -8,101 +8,146 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "wh-op-001",
+      "id": "7175a01f-7d84-4a28-8d83-89bc8740dc11",
       "name": "Webhook (POST /inventory/operation)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [200, 400],
+      "position": [
+        -864,
+        208
+      ],
       "webhookId": "inventory-operation"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "conditions": [
             {
               "id": "secret",
               "leftValue": "={{ $json.headers['x-webhook-secret'] }}",
               "rightValue": "={{ $env.WEBHOOK_SECRET }}",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
-      "id": "if-secret-003",
+      "id": "fc272782-e914-4bdb-8942-d3ecedc082af",
       "name": "Verify Secret",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [400, 400]
+      "position": [
+        -656,
+        208
+      ]
     },
     {
       "parameters": {
         "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst { item_id, action, quantity } = body;\n\nconst errors = [];\nif (!Number.isInteger(item_id) || item_id <= 0) errors.push('item_id must be a positive integer');\nif (!['inbound','outbound'].includes(action)) errors.push(\"action must be 'inbound' or 'outbound'\");\nif (!Number.isInteger(quantity) || quantity <= 0) errors.push('quantity must be a positive integer');\n\nif (errors.length) {\n  return [{ json: { _validation_error: errors.join('; ') } }];\n}\nreturn [{ json: { item_id, action, quantity } }];"
       },
-      "id": "code-validate-001",
+      "id": "0ff18b17-75dd-4e35-83c1-17b0d18e0004",
       "name": "Validate Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [620, 320]
+      "position": [
+        -448,
+        128
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
           "conditions": [
             {
               "id": "has-err",
               "leftValue": "={{ $json._validation_error }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
-      "id": "if-validation-001",
+      "id": "6cd22fa6-0534-41ff-aad1-ff6abdd073ad",
       "name": "Has Validation Error?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [840, 320]
+      "position": [
+        -224,
+        128
+      ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseCode": 200,
-        "responseBody": "={{ { ok: false, status: 'validation_error', message: $json._validation_error } }}"
+        "responseBody": "={{ { ok: false, status: 'validation_error', message: $json._validation_error } }}",
+        "options": {}
       },
-      "id": "resp-val-err",
+      "id": "7be2d220-d918-478b-838b-95105c028f28",
       "name": "Respond 200 (validation_error)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1060, 200]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "select id, item_name, category, price, stock_level, reorder_point from public.inventory where id = $1 for update;",
-        "options": { "queryReplacement": "={{ $json.item_id }}" }
+        "options": {
+          "queryReplacement": "={{ $json.item_id }}"
+        }
       },
-      "id": "pg-get-item",
+      "id": "ee681576-ff66-4ebe-b968-5a8904500317",
       "name": "Postgres — Get item (FOR UPDATE)",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1060, 440],
+      "position": [
+        0,
+        240
+      ],
       "credentials": {
-        "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" }
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
       }
     },
     {
       "parameters": {
         "jsCode": "// Merge the SELECT result with the original validated input.\nconst item = $input.first().json;\nconst input = $('Validate Input').first().json;\nreturn [{ json: { ...input, item } }];"
       },
-      "id": "code-merge-001",
+      "id": "2bb1160a-8929-4d62-a5ca-a9ca6e3abb91",
       "name": "Merge item + input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1280, 440]
+      "position": [
+        224,
+        240
+      ]
     },
     {
       "parameters": {
@@ -110,12 +155,20 @@
           "values": [
             {
               "conditions": {
-                "options": { "caseSensitive": true, "typeValidation": "strict" },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.action }}",
                     "rightValue": "inbound",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -125,12 +178,20 @@
             },
             {
               "conditions": {
-                "options": { "caseSensitive": true, "typeValidation": "strict" },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
                 "conditions": [
                   {
                     "leftValue": "={{ $json.action }}",
                     "rightValue": "outbound",
-                    "operator": { "type": "string", "operation": "equals" }
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
                   }
                 ],
                 "combinator": "and"
@@ -142,24 +203,37 @@
         },
         "options": {}
       },
-      "id": "switch-action-001",
+      "id": "4f2bca13-51ce-4bd7-85b5-306796e5ed66",
       "name": "Switch on action",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [1500, 440]
+      "position": [
+        448,
+        240
+      ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "update public.inventory set stock_level = stock_level + $1 where id = $2 returning id, item_name, category, stock_level, reorder_point;",
-        "options": { "queryReplacement": "={{ $json.quantity }},{{ $json.item_id }}" }
+        "options": {
+          "queryReplacement": "={{ $json.quantity }},{{ $json.item_id }}"
+        }
       },
-      "id": "pg-inbound-update",
+      "id": "2e6cfd40-6498-4947-be1c-aee142152860",
       "name": "Postgres — Inbound +qty",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1720, 280],
-      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+      "position": [
+        672,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
+      }
     },
     {
       "parameters": {
@@ -169,68 +243,106 @@
           "queryReplacement": "={{ $('Merge item + input').first().json.item.item_name }},{{ $('Merge item + input').first().json.item.category }},{{ $('Merge item + input').first().json.item.price }},{{ $('Merge item + input').first().json.quantity }}"
         }
       },
-      "id": "pg-inbound-log",
+      "id": "3b65e1db-e747-48a0-99ce-5d4eae75481c",
       "name": "Postgres — Log inbound",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1940, 280],
-      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+      "position": [
+        880,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
+      }
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { ok: true, status: 'success', item: $('Postgres — Inbound +qty').first().json, log_id: $json.id } }}"
+        "responseBody": "={{ { ok: true, status: 'success', item: $('Postgres — Inbound +qty').first().json, log_id: $json.id } }}",
+        "options": {}
       },
-      "id": "resp-inbound-ok",
+      "id": "57152332-9910-4593-86de-c5855ddda5ca",
       "name": "Respond inbound success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2160, 280]
+      "position": [
+        1104,
+        80
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "conditions": [
             {
               "id": "insufficient",
               "leftValue": "={{ $json.quantity }}",
               "rightValue": "={{ $json.item.stock_level }}",
-              "operator": { "type": "number", "operation": "gt" }
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
-      "id": "if-insufficient",
+      "id": "4b2fdcb6-d539-41ad-8c4f-39227a0b8ba7",
       "name": "Insufficient stock?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1720, 600]
+      "position": [
+        672,
+        400
+      ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { ok: false, status: 'insufficient', message: 'Requested ' + $json.quantity + ' but only ' + $json.item.stock_level + ' available.', item: { id: $json.item.id, item_name: $json.item.item_name, stock_level: $json.item.stock_level }, requested: $json.quantity, available: $json.item.stock_level } }}"
+        "responseBody": "={{ { ok: false, status: 'insufficient', message: 'Requested ' + $json.quantity + ' but only ' + $json.item.stock_level + ' available.', item: { id: $json.item.id, item_name: $json.item.item_name, stock_level: $json.item.stock_level }, requested: $json.quantity, available: $json.item.stock_level } }}",
+        "options": {}
       },
-      "id": "resp-insufficient",
+      "id": "a963d88c-bdc0-4a21-bd36-039b0dea3bfa",
       "name": "Respond insufficient",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1940, 500]
+      "position": [
+        880,
+        304
+      ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "update public.inventory set stock_level = stock_level - $1 where id = $2 returning id, item_name, category, stock_level, reorder_point;",
-        "options": { "queryReplacement": "={{ $json.quantity }},{{ $json.item_id }}" }
+        "options": {
+          "queryReplacement": "={{ $json.quantity }},{{ $json.item_id }}"
+        }
       },
-      "id": "pg-outbound-update",
+      "id": "b1007623-2bf2-4068-bd8f-f5ed4d32e43c",
       "name": "Postgres — Outbound -qty",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1940, 720],
-      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+      "position": [
+        880,
+        528
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
+      }
     },
     {
       "parameters": {
@@ -240,138 +352,327 @@
           "queryReplacement": "={{ $('Merge item + input').first().json.item.item_name }},{{ $('Merge item + input').first().json.item.category }},{{ $('Merge item + input').first().json.item.price }},{{ $('Merge item + input').first().json.quantity }}"
         }
       },
-      "id": "pg-outbound-log",
+      "id": "f7e51a3d-361c-438c-8101-faaa711105ec",
       "name": "Postgres — Log outbound",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [2160, 720],
-      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+      "position": [
+        1104,
+        528
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
+      }
     },
     {
       "parameters": {
         "jsCode": "// Carry the log id, the updated item, and check below-reorder.\nconst log = $input.first().json;\nconst updated = $('Postgres — Outbound -qty').first().json;\nreturn [{ json: { log_id: log.id, item: updated, below_reorder: updated.stock_level < updated.reorder_point } }];"
       },
-      "id": "code-outbound-classify",
+      "id": "866beddb-4e91-412a-99ae-9ebe23d0b9cb",
       "name": "Classify outbound result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2380, 720]
+      "position": [
+        1328,
+        528
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "conditions": [
             {
               "leftValue": "={{ $json.below_reorder }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equals", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "equals",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
-      "id": "if-below-reorder",
+      "id": "8e4a101f-a280-4264-997f-672663de6e64",
       "name": "Below reorder?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2600, 720]
+      "position": [
+        1552,
+        528
+      ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { ok: true, status: 'below_reorder', message: 'Outbound completed. ' + $json.item.item_name + ' is now below reorder point (' + $json.item.stock_level + ' < ' + $json.item.reorder_point + ').', item: $json.item, log_id: $json.log_id } }}"
+        "responseBody": "={{ { ok: true, status: 'below_reorder', message: 'Outbound completed. ' + $json.item.item_name + ' is now below reorder point (' + $json.item.stock_level + ' < ' + $json.item.reorder_point + ').', item: $json.item, log_id: $json.log_id } }}",
+        "options": {}
       },
-      "id": "resp-below-reorder",
+      "id": "8e9720f7-1f48-48c9-b827-e7b5127d409f",
       "name": "Respond below_reorder",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2820, 620]
+      "position": [
+        1760,
+        432
+      ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { ok: true, status: 'success', item: $json.item, log_id: $json.log_id } }}"
+        "responseBody": "={{ { ok: true, status: 'success', item: $json.item, log_id: $json.log_id } }}",
+        "options": {}
       },
-      "id": "resp-outbound-ok",
+      "id": "469471a9-b830-49b6-84e3-f498e3efb81d",
       "name": "Respond outbound success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2820, 820]
+      "position": [
+        1760,
+        624
+      ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseCode": 401,
-        "responseBody": "={{ { ok: false, status: 'unauthorized', message: 'Invalid webhook secret' } }}"
+        "responseBody": "={{ { ok: false, status: 'unauthorized', message: 'Invalid webhook secret' } }}",
+        "options": {}
       },
-      "id": "resp-401-003",
+      "id": "e32b3c16-fc11-4153-8e9d-f61d60ab288d",
       "name": "Respond 401",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [620, 580]
+      "position": [
+        -448,
+        384
+      ]
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook (POST /inventory/operation)": {
-      "main": [[{ "node": "Verify Secret", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Verify Secret": {
       "main": [
-        [{ "node": "Validate Input", "type": "main", "index": 0 }],
-        [{ "node": "Respond 401", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Validate Input": {
-      "main": [[{ "node": "Has Validation Error?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Has Validation Error?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Validation Error?": {
       "main": [
-        [{ "node": "Respond 200 (validation_error)", "type": "main", "index": 0 }],
-        [{ "node": "Postgres — Get item (FOR UPDATE)", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Respond 200 (validation_error)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postgres — Get item (FOR UPDATE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Postgres — Get item (FOR UPDATE)": {
-      "main": [[{ "node": "Merge item + input", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Merge item + input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Merge item + input": {
-      "main": [[{ "node": "Switch on action", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Switch on action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Switch on action": {
       "main": [
-        [{ "node": "Postgres — Inbound +qty", "type": "main", "index": 0 }],
-        [{ "node": "Insufficient stock?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Postgres — Inbound +qty",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insufficient stock?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Postgres — Inbound +qty": {
-      "main": [[{ "node": "Postgres — Log inbound", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Postgres — Log inbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Postgres — Log inbound": {
-      "main": [[{ "node": "Respond inbound success", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond inbound success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Insufficient stock?": {
       "main": [
-        [{ "node": "Respond insufficient", "type": "main", "index": 0 }],
-        [{ "node": "Postgres — Outbound -qty", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Respond insufficient",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postgres — Outbound -qty",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Postgres — Outbound -qty": {
-      "main": [[{ "node": "Postgres — Log outbound", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Postgres — Log outbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Postgres — Log outbound": {
-      "main": [[{ "node": "Classify outbound result", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Classify outbound result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Classify outbound result": {
-      "main": [[{ "node": "Below reorder?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Below reorder?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Below reorder?": {
       "main": [
-        [{ "node": "Respond below_reorder", "type": "main", "index": 0 }],
-        [{ "node": "Respond outbound success", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Respond below_reorder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond outbound success",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
-  "active": false,
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "warehouseIQ" }]
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "LgS2GUoY7AXMXt2T",
+    "timezone": "Europe/Sofia",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "288a65f1-237d-4223-aaee-9d908c90f5c1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "37ba655aaf31738b8f5d06390490a0f4d491cf9acdb5c3dd7fb44113ebb1c85a"
+  },
+  "id": "gODA3fbEjAsOO1Jw",
+  "tags": [
+    {
+      "updatedAt": "2026-05-17T09:30:39.768Z",
+      "createdAt": "2026-05-17T09:30:39.768Z",
+      "id": "XdVvwQrY3LhS9NIP",
+      "name": "warehouseIQ"
+    }
+  ]
 }

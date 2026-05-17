@@ -3,21 +3,27 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "err-trigger",
+      "id": "db6bd62e-cce7-4b85-bfee-db263f3600b6",
       "name": "Error Trigger",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
-      "position": [240, 320]
+      "position": [
+        0,
+        0
+      ]
     },
     {
       "parameters": {
         "jsCode": "const e = $input.first().json;\nreturn [{\n  json: {\n    workflow_name: e.workflow?.name ?? 'unknown',\n    node_name:     e.execution?.lastNodeExecuted ?? 'unknown',\n    error_message: e.execution?.error?.message ?? 'unknown error',\n    payload:       e\n  }\n}];"
       },
-      "id": "code-format-err",
+      "id": "abd5b5b8-2b88-4fab-9451-a9dbba8faba3",
       "name": "Format error payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 320]
+      "position": [
+        224,
+        0
+      ]
     },
     {
       "parameters": {
@@ -27,23 +33,64 @@
           "queryReplacement": "={{ $json.workflow_name }},{{ $json.node_name }},{{ $json.error_message }},{{ JSON.stringify($json.payload) }}"
         }
       },
-      "id": "pg-err-insert",
+      "id": "e2c30972-788f-4074-925b-f8341019d8fc",
       "name": "Postgres — Insert error_logs",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [680, 320],
-      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
+      }
     }
   ],
+  "pinData": {},
   "connections": {
     "Error Trigger": {
-      "main": [[{ "node": "Format error payload", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Format error payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Format error payload": {
-      "main": [[{ "node": "Postgres — Insert error_logs", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Postgres — Insert error_logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "warehouseIQ" }]
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "211c06ee-2d99-464e-9f55-829f55d36071",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "37ba655aaf31738b8f5d06390490a0f4d491cf9acdb5c3dd7fb44113ebb1c85a"
+  },
+  "id": "LgS2GUoY7AXMXt2T",
+  "tags": [
+    {
+      "updatedAt": "2026-05-17T09:30:39.768Z",
+      "createdAt": "2026-05-17T09:30:39.768Z",
+      "id": "XdVvwQrY3LhS9NIP",
+      "name": "warehouseIQ"
+    }
+  ]
 }

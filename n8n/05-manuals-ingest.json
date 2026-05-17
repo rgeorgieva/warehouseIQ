@@ -3,11 +3,14 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "manual-trigger",
+      "id": "c4a8b687-e55d-426e-bb0b-877d039826c4",
       "name": "Run once (Manual Trigger)",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [240, 400]
+      "position": [
+        -96,
+        -16
+      ]
     },
     {
       "parameters": {
@@ -15,45 +18,75 @@
         "query": "select id, product_name, category, content, version, to_char(last_updated,'YYYY-MM-DD') as last_updated from public.manuals_raw order by id;",
         "options": {}
       },
-      "id": "pg-manuals-raw",
+      "id": "79b0969e-1250-419c-af08-3d4f8eb9c852",
       "name": "Postgres — read manuals_raw",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [460, 400],
-      "credentials": { "postgres": { "id": "REPLACE_ME", "name": "Supabase Postgres" } }
+      "position": [
+        128,
+        -16
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "IO48Ggme0ItjD44f",
+          "name": "Postgres (WarehouseIQ)"
+        }
+      }
     },
     {
       "parameters": {
-        "dataType": "text",
-        "text": "={{ $json.content }}",
+        "jsonMode": "expressionData",
+        "jsonData": "=\t={{ $json.content }}",
         "options": {
           "metadata": {
             "metadataValues": [
-              { "name": "product_name", "value": "={{ $json.product_name }}" },
-              { "name": "category",     "value": "={{ $json.category }}" },
-              { "name": "version",      "value": "={{ $json.version }}" },
-              { "name": "last_updated", "value": "={{ $json.last_updated }}" },
-              { "name": "source",       "value": "manuals_raw" }
+              {
+                "name": "product_name",
+                "value": "={{ $json.product_name }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.category }}"
+              },
+              {
+                "name": "version",
+                "value": "={{ $json.version }}"
+              },
+              {
+                "name": "last_updated",
+                "value": "={{ $json.last_updated }}"
+              },
+              {
+                "name": "source",
+                "value": "manuals_raw"
+              }
             ]
           }
         }
       },
-      "id": "loader-001",
+      "id": "b4ef9a6a-e866-4144-b503-fda3c5752b96",
       "name": "Default Data Loader",
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1,
-      "position": [680, 540]
+      "position": [
+        480,
+        208
+      ]
     },
     {
       "parameters": {
         "chunkSize": 800,
-        "chunkOverlap": 100
+        "chunkOverlap": 100,
+        "options": {}
       },
-      "id": "splitter-001",
+      "id": "49dee451-6a28-42e7-86c0-66fb8cf42044",
       "name": "Recursive Character Text Splitter",
       "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
       "typeVersion": 1,
-      "position": [680, 700]
+      "position": [
+        560,
+        416
+      ]
     },
     {
       "parameters": {
@@ -61,43 +94,116 @@
         "tableName": "product_manuals",
         "options": {}
       },
-      "id": "vstore-insert",
+      "id": "8180464c-a6f3-4837-a892-53a64cb0f0a7",
       "name": "Supabase Vector Store (Insert)",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1.1,
-      "position": [900, 400],
-      "credentials": { "supabaseApi": { "id": "REPLACE_ME", "name": "Supabase" } }
+      "position": [
+        384,
+        -16
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "KkInqt9O29rPhApI",
+          "name": "Supabase (WarehouseIQ)"
+        }
+      }
     },
     {
       "parameters": {
-        "model": "text-embedding-3-small"
+        "options": {}
       },
-      "id": "emb-002",
+      "id": "3dad9f84-a4c6-4e22-bec4-336ff5945389",
       "name": "OpenAI Embeddings (text-embedding-3-small)",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
-      "position": [900, 580],
-      "credentials": { "openAiApi": { "id": "REPLACE_ME", "name": "OpenAI" } }
+      "position": [
+        352,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "7WdWlkJ9jNawAutY",
+          "name": "OpenAI account"
+        }
+      }
     }
   ],
+  "pinData": {},
   "connections": {
     "Run once (Manual Trigger)": {
-      "main": [[{ "node": "Postgres — read manuals_raw", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Postgres — read manuals_raw",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Postgres — read manuals_raw": {
-      "main": [[{ "node": "Supabase Vector Store (Insert)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store (Insert)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Default Data Loader": {
-      "ai_document": [[{ "node": "Supabase Vector Store (Insert)", "type": "ai_document", "index": 0 }]]
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store (Insert)",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Recursive Character Text Splitter": {
-      "ai_textSplitter": [[{ "node": "Default Data Loader", "type": "ai_textSplitter", "index": 0 }]]
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
     },
     "OpenAI Embeddings (text-embedding-3-small)": {
-      "ai_embedding": [[{ "node": "Supabase Vector Store (Insert)", "type": "ai_embedding", "index": 0 }]]
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store (Insert)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "warehouseIQ" }]
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "42bb7d2f-8ef8-4de7-a3b6-3940a80f9e7a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "37ba655aaf31738b8f5d06390490a0f4d491cf9acdb5c3dd7fb44113ebb1c85a"
+  },
+  "id": "wQKcGvqW4Wstwvyz",
+  "tags": [
+    {
+      "updatedAt": "2026-05-17T09:30:39.768Z",
+      "createdAt": "2026-05-17T09:30:39.768Z",
+      "id": "XdVvwQrY3LhS9NIP",
+      "name": "warehouseIQ"
+    }
+  ]
 }
